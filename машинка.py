@@ -10,6 +10,7 @@ size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 money = 10
+ex = 0
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -58,7 +59,7 @@ def start_screen():
 
 
 def load_level(filename):
-    filename = "data/" + filename
+    filename = "lvls/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line for line in mapFile]
@@ -76,7 +77,7 @@ tile_images = {
     'bottom': pygame.transform.rotate(load_image('право.png'), 270),
     'top': pygame.transform.rotate(load_image('право.png'), 90),
     'all': load_image('стена.png'),
-    'empty': load_image('тёмнофиолетовый фон.jpg'),
+    'empty': load_image('тёмнофиолетовый фон.png'),
     'non': load_image('пусто.jpg', 'red'),
     'coin': load_image('звезда для игры.png'),
     'exit': load_image('сундук1.png', -1),
@@ -236,6 +237,8 @@ def generate_level(level):
 pygame.display.set_caption('Перемещение героя')
 start_screen()
 def play(map):
+    global ex
+    star = 0
     global money
     level_map = load_level(map)
     font = pygame.font.SysFont('Consolas', 30)
@@ -256,11 +259,16 @@ def play(map):
                             player.go(x, y)
                             player.up()
                             if pygame.sprite.spritecollideany(player, money_group):
-                                money += pygame.sprite.spritecollideany(player, money_group).price
+                                if pygame.sprite.spritecollideany(player, money_group).price == 1:
+                                    star += 1
+                                else:
+                                    money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 running = False
+                                stars[map] = star
+                                ex += 1
                                 menu()
                 if event.key == pygame.K_DOWN:
                     if y < level_y - 1 and level_map[y + 1][x] not in 'ad#ws':
@@ -269,11 +277,16 @@ def play(map):
                             player.go(x, y)
                             player.image = player_image
                             if pygame.sprite.spritecollideany(player, money_group):
-                                money += pygame.sprite.spritecollideany(player, money_group).price
+                                if pygame.sprite.spritecollideany(player, money_group).price == 1:
+                                    star += 1
+                                else:
+                                    money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 running = False
+                                stars[map] = star
+                                ex += 1
                                 menu()
                 if event.key == pygame.K_LEFT:
                     if x > 0 and level_map[y][x - 1] not in 'ad#ws':
@@ -282,11 +295,16 @@ def play(map):
                             player.go(x, y)
                             player.left()
                             if pygame.sprite.spritecollideany(player, money_group):
-                                money += pygame.sprite.spritecollideany(player, money_group).price
+                                if pygame.sprite.spritecollideany(player, money_group).price == 1:
+                                    star += 1
+                                else:
+                                    money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 running = False
+                                stars[map] = star
+                                ex += 1
                                 menu()
                 if event.key == pygame.K_RIGHT:
                     if x < level_x - 1 and level_map[y][x + 1] not in 'ad#ws':
@@ -295,19 +313,17 @@ def play(map):
                             player.go(x, y)
                             player.right()
                             if pygame.sprite.spritecollideany(player, money_group):
-                                money += pygame.sprite.spritecollideany(player, money_group).price
+                                if pygame.sprite.spritecollideany(player, money_group).price == 1:
+                                    star += 1
+                                else:
+                                    money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 running = False
+                                stars[map] = star
+                                ex += 1
                                 menu()
-
-
-                                #number += 1
-                            #if level_map[y][x] == '+':
-
-                #if level_map[y][x] == 'x':
-                    #player.kill()
         door_group.update()
 
         tiles_group.draw(screen)
@@ -318,9 +334,33 @@ def play(map):
         pygame.display.flip()
     pygame.quit()
 
+stars = {'map1': 0, 'map2': 0, 'map3': 0, 'map4': 0,
+         'map5': 0, 'map6': 0, 'map7': 0, 'map8': 0,
+         'map9': 0, 'map10': 0, 'map11': 0, 'map12': 0,
+         'map13': 0, 'map14': 0, 'map15': 0, 'map16': 0
+         }
+lvl = 1
+energy = 5
 def menu():
+    global lvl
+    global ex
+    global energy
+    global money
+    if ex == lvl:
+        ex = 0
+        lvl += 1
+        energy = 5
+        money += 50 * lvl
+        font = pygame.font.Font(None, 100)
+        fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
+        screen.blit(fon, (0, 0))
+        screen.blit(font.render('new lvl!!!', False, 'yellow'), (width // 2 - 150, height // 2 - 50))
+        screen.blit(font.render(str(lvl * 50), False, 'yellow'), (width // 2 - 150, height // 2 + 50))
+        pygame.display.flip()
+        sleep(2)
 
-    intro_text = ['ddsfasfsa', 'dddd', 'ddd']
+    fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
+    screen.blit(fon, (0, 0))
     font = pygame.font.SysFont('Consolas', 38)
 
     clock = pygame.time.Clock()
@@ -329,28 +369,37 @@ def menu():
     fon = font.render(str(money), 10, pygame.Color('yellow'))
     screen.blit(fon, (width - len(str(money)) * 38 - 60, 0))
     font = pygame.font.Font(None, 30)
-    text_coord = 50
     screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
-    '''
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-    '''
+    font = pygame.font.Font(None, 60)
+    screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
+    en = load_image('энергия.jpg')
+    screen.blit(en, en.get_rect().move(width // 2 - 100, 5))
+    for i in range(1, energy + 1):
+        pygame.draw.rect(screen, 'yellow',
+                         (width // 2 - 80 + i * 22, 5, 20, 30))
     pygame.draw.rect(screen, 'yellow',
-                     (width - 45, 3, 30, 30))
+                    (width - 45, 3, 30, 30))
     pygame.draw.line(screen, 'black',
                      [width - 40, 17],
                      [width - 20, 17], 3)
     pygame.draw.line(screen, 'black',
                      [width - 30, 7],
                      [width - 30, 27], 3)
-    for i in range(1, 20):
-        Lvl_choose(i * 25, i * 25, i)
+    num = 0
+    star = load_image('звезда для меню.png', -1)
+    padlock = load_image('замок.webp', -2)
+    for i in range(1, 5):
+        for j in range(1, 5):
+            num += 1
+            font = pygame.font.SysFont('Consolas', 70)
+            pygame.draw.rect(screen, 'blue',
+                             (j * 100 - 40, i * 100 - 30, 75, 75))
+            screen.blit(font.render(str(num), False, 'black'), (j * 100 - 40, i * 100 - 30))
+            for x in range(1, stars['map' + str(num)] + 1):
+                screen.blit(star, star.get_rect().move(j * 100 - 40 + (x - 1) * 25, i * 100 + 20))
+            if i != 1 or j != 1:
+                if stars['map' + str(num - 1)] == 0:
+                    screen.blit(padlock, padlock.get_rect().move(j * 100 - 40, i * 100 - 30))
     image = load_image('обрезанная монета.png', 'black')
     dog_rect = image.get_rect(
         bottomright=(width - len(str(money)) * 10 - 30, image.get_height() + 2))
@@ -359,11 +408,36 @@ def menu():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                reboot()
-                play('map.txt')
-                return 0
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if y in range(70, 141):
+                    for i in range(1, 5):
+                        if x in range(i * 100 - 40, i * 100 + 30):
+                            energy -= 1
+                            reboot()
+                            play('map' + str(i))
+                            return 0
+                if y in range(170, 241):
+                    for i in range(1, 5):
+                        if x in range(i * 100 - 40, i * 100 + 30):
+                            energy -= 1
+                            reboot()
+                            play('map' + str(i + 4))
+                            return 0
+                if y in range(270, 341):
+                    for i in range(1, 5):
+                        if x in range(i * 100 - 40, i * 100 + 30):
+                            energy -= 1
+                            reboot()
+                            play('map' + str(i + 8))
+                            return 0
+                if y in range(370, 441):
+                    for i in range(1, 5):
+                        if x in range(i * 100 - 40, i * 100 + 30):
+                            energy -= 1
+                            reboot()
+                            play('map' + str(i + 12))
+                            return 0
         lvl_group.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
