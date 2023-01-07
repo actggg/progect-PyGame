@@ -9,7 +9,7 @@ FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-money = 10
+money = 810
 ex = 0
 
 def load_image(name, colorkey=None):
@@ -89,6 +89,7 @@ tile_images = {
     'диск': load_image('диск.png', -1)
 }
 player_image = load_image('куб.jpeg')
+player_image_num = 0
 #door_image = load_image('exit.gif')
 
 tile_width = tile_height = 25
@@ -111,37 +112,6 @@ class Money(pygame.sprite.Sprite):
                 self.price = 1
             else:
                 self.price = 10
-class Lvl_choose(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, number):
-        super().__init__(lvl_group)
-        self.pos = (pos_x, pos_y)
-        self.image = load_image('квадрат.jpg', 'red')
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
-        self.pos = (pos_x, pos_y)
-'''
-class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(door_group)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
-'''
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
@@ -261,7 +231,7 @@ def play(map):
     # doors = AnimatedSprite(load_image("дверь.png", 'white'), 6, 1, 150, 150)
     screen.fill('black')
     running = True
-    def t(exp, star=None):
+    def game_over(exp, star=None):
         global ex
         global running
         running = False
@@ -293,11 +263,11 @@ def play(map):
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if level_map[y][x] in 'ftgh*':
-                                t(0.5)
+                                game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
-                                t(1, star)
+                                game_over(1, star)
                                 return 0
                 if event.key == pygame.K_DOWN:
                     if y < level_y - 1 and level_map[y + 1][x] not in 'ad#ws':
@@ -312,11 +282,11 @@ def play(map):
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if level_map[y][x] in 'ftgh*':
-                                t(0.5)
+                                game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
-                                t(1, star)
+                                game_over(1, star)
                                 return 0
                 if event.key == pygame.K_LEFT:
                     if x > 0 and level_map[y][x - 1] not in 'ad#ws':
@@ -331,11 +301,11 @@ def play(map):
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if level_map[y][x] in 'ftgh*':
-                                t(0.5)
+                                game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
-                                t(1, star)
+                                game_over(1, star)
                                 return 0
                 if event.key == pygame.K_RIGHT:
                     if x < level_x - 1 and level_map[y][x + 1] not in 'ad#ws':
@@ -350,11 +320,11 @@ def play(map):
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if level_map[y][x] in 'ftgh*':
-                                t(1)
+                                game_over(1)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
-                                t(1, star)
+                                game_over(1, star)
                                 return 0
         door_group.update()
 
@@ -378,6 +348,8 @@ def menu(lose_or_win=None):
     global ex
     global energy
     global money
+    global player_image
+    global player_image_num
     if ex == lvl:
         ex = 0
         lvl += 1
@@ -405,51 +377,7 @@ def menu(lose_or_win=None):
         pygame.display.flip()
         sleep(0.5)
 
-    fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
-    screen.blit(fon, (0, 0))
-    font = pygame.font.SysFont('Consolas', 38)
-
-    clock = pygame.time.Clock()
-    pygame.draw.rect(screen, 'black',
-                     (0, 0, width, 40))
-    fon = font.render(str(money), 10, pygame.Color('yellow'))
-    screen.blit(fon, (width - len(str(money)) * 38 - 60, 0))
-    font = pygame.font.Font(None, 30)
-    screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
-    font = pygame.font.Font(None, 60)
-    screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
-    en = load_image('энергия.jpg')
-    screen.blit(en, en.get_rect().move(width // 2 - 100, 5))
-    for i in range(1, energy + 1):
-        pygame.draw.rect(screen, 'yellow',
-                         (width // 2 - 80 + i * 22, 5, 20, 30))
-    pygame.draw.rect(screen, 'yellow',
-                    (width - 45, 3, 30, 30))
-    pygame.draw.line(screen, 'black',
-                     [width - 40, 17],
-                     [width - 20, 17], 3)
-    pygame.draw.line(screen, 'black',
-                     [width - 30, 7],
-                     [width - 30, 27], 3)
-    num = 0
-    star = load_image('звезда для меню.png', -1)
-    padlock = load_image('замок.webp', -2)
-    for i in range(1, 5):
-        for j in range(1, 5):
-            num += 1
-            font = pygame.font.SysFont('Consolas', 70)
-            pygame.draw.rect(screen, 'blue',
-                             (j * 100 - 40, i * 100 - 30, 75, 75))
-            screen.blit(font.render(str(num), False, 'black'), (j * 100 - 40, i * 100 - 30))
-            for x in range(1, stars['map' + str(num)] + 1):
-                screen.blit(star, star.get_rect().move(j * 100 - 40 + (x - 1) * 25, i * 100 + 20))
-            if i != 1 or j != 1:
-                if stars['map' + str(num - 1)] == 0:
-                    screen.blit(padlock, padlock.get_rect().move(j * 100 - 40, i * 100 - 30))
-    image = load_image('обрезанная монета.png', 'black')
-    dog_rect = image.get_rect(
-        bottomright=(width - len(str(money)) * 10 - 30, image.get_height() + 2))
-    screen.blit(image, dog_rect)
+    go = True
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -459,7 +387,7 @@ def menu(lose_or_win=None):
                 if y in range(70, 141):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i - 1)] == 0 and energy >= 1:
+                            if stars['map' + str(i - 1)] != 0 and energy >= 1 and go:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i))
@@ -467,7 +395,7 @@ def menu(lose_or_win=None):
                 if y in range(170, 241):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 3)] != 0 and energy >= 1:
+                            if stars['map' + str(i + 3)] != 0 and energy >= 1 and go:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 4))
@@ -475,7 +403,7 @@ def menu(lose_or_win=None):
                 if y in range(270, 341):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 7)] != 0 and energy >= 1:
+                            if stars['map' + str(i + 7)] != 0 and energy >= 1 and go:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 8))
@@ -483,12 +411,103 @@ def menu(lose_or_win=None):
                 if y in range(370, 441):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 11)] != 0 and energy >= 1:
+                            if stars['map' + str(i + 11)] != 0 and energy >= 1 and go:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 12))
                                 return 0
-        lvl_group.draw(screen)
-        pygame.display.flip()
-        clock.tick(FPS)
+                if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and go:
+                    go = False
+                    print(1)
+                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20):
+                    go = True
+                    print(2)
+        if go:
+            fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
+            screen.blit(fon, (0, 0))
+            font = pygame.font.SysFont('Consolas', 38)
+
+            clock = pygame.time.Clock()
+            pygame.draw.rect(screen, 'black',
+                             (0, 0, width, 40))
+            fon = font.render(str(money), 10, pygame.Color('yellow'))
+            screen.blit(fon, (width - len(str(money)) * 38 - 60, 0))
+            font = pygame.font.Font(None, 30)
+            screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
+            font = pygame.font.Font(None, 60)
+            screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
+            en = load_image('энергия.jpg')
+            screen.blit(en, en.get_rect().move(width // 2 - 100, 5))
+            for i in range(1, energy + 1):
+                pygame.draw.rect(screen, 'yellow',
+                                 (width // 2 - 80 + i * 22, 5, 20, 30))
+            pygame.draw.rect(screen, 'yellow',
+                             (width - 45, 3, 30, 30))
+            pygame.draw.line(screen, 'black',
+                             [width - 40, 17],
+                             [width - 20, 17], 3)
+            pygame.draw.line(screen, 'black',
+                             [width - 30, 7],
+                             [width - 30, 27], 3)
+            num = 0
+            star = load_image('звезда для меню.png', -1)
+            padlock = load_image('замок.webp', -2)
+            for i in range(1, 5):
+                for j in range(1, 5):
+                    num += 1
+                    font = pygame.font.SysFont('Consolas', 70)
+                    pygame.draw.rect(screen, 'blue',
+                                     (j * 100 - 40, i * 100 - 30, 75, 75))
+                    screen.blit(font.render(str(num), False, 'black'), (j * 100 - 40, i * 100 - 30))
+                    for x in range(1, stars['map' + str(num)] + 1):
+                        screen.blit(star, star.get_rect().move(j * 100 - 40 + (x - 1) * 25, i * 100 + 20))
+                    if i != 1 or j != 1:
+                        if stars['map' + str(num - 1)] == 0:
+                            screen.blit(padlock, padlock.get_rect().move(j * 100 - 40, i * 100 - 30))
+            image = load_image('обрезанная монета.png', 'black')
+            dog_rect = image.get_rect(
+                bottomright=(width - len(str(money)) * 10 - 30, image.get_height() + 2))
+            screen.blit(image, dog_rect)
+            pygame.draw.rect(screen, 'yellow',
+                             (width // 2 - 50, height - 50, 100, 30))
+            font = pygame.font.Font(None, 35)
+            screen.blit(font.render('shop', False, 'black'), (width // 2 - 45, height - 50))
+
+            lvl_group.draw(screen)
+            pygame.display.flip()
+            clock.tick(FPS)
+        else:
+            pygame.draw.rect(screen, 'yellow',
+                             (width // 2 - 140, height // 2 - 100, 300, 200))
+            pygame.draw.rect(screen, 'black',
+                             (width // 2 - 115, height // 2 - 85, 110, 150), 2)
+            screen.blit(load_image('персонаж 2 для магазина.jpg', -1), load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110, height // 2 - 80))
+            if player_image_num != 1:
+                font = pygame.font.Font(None, 70)
+                screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
+            pygame.draw.rect(screen, 'black',
+                             (width // 2 + 25, height // 2 - 85, 110, 150), 2)
+            screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
+                        load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
+                                                                                      height // 2 - 80))
+            if player_image_num != 2:
+                font = pygame.font.Font(None, 70)
+                screen.blit(font.render('800', False, 'black'), (width // 2 + 35, height // 2 + 20))
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if y in range(height // 2 - 85, height // 2 + 65):
+                    if x in range(width // 2 - 115, width // 2 - 15):
+                        if money >= 200 and player_image_num != 1:
+                            money -= 200
+                            player_image = load_image('персонаж 2.jpg')
+                            player_image_num = 1
+                            go = True
+                if y in range(height // 2 - 85, height // 2 + 65):
+                    if x in range(width // 2 + 25, width // 2 + 135):
+                        if money >= 800 and player_image_num != 2:
+                            money -= 800
+                            player_image = load_image('персонаж 3.png')
+                            player_image_num = 2
+                            go = True
+            pygame.display.flip()
 menu()
