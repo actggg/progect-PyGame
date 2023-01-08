@@ -11,7 +11,7 @@ FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-money = 810
+money = 1010
 ex = 0
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -63,7 +63,7 @@ def load_level(filename):
     filename = "lvls/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
-        level_map = [line for line in mapFile]
+        level_map = [line.strip() for line in mapFile]
 
     # и подсчитываем максимальную длину
     max_width = max(map(len, level_map))
@@ -87,7 +87,8 @@ tile_images = {
     'coin': load_image('звезда для игры.png'),
     'exit': load_image('сундук1.png', -1),
     'портал': load_image('квадрат красивый.jpg'),
-    'диск': load_image('диск.png', -1)
+    'диск': load_image('диск.png', -1),
+    'телепорт': load_image('портал.jpg', 'black')
 }
 player_image = load_image('куб.jpeg')
 player_image_num = 0
@@ -207,11 +208,10 @@ def generate_level(level):
             elif level[y][x] == '#':
                 Tile('all', x, y)
             elif level[y][x] == 'x':
-                Tile('empty', x, y)
-                new_money = Money('exit', x, y)
+                Money('exit', x, y)
             elif level[y][x] == '+':
                 Tile('empty', x, y)
-                new_money = Money('coin', x, y)
+                Money('coin', x, y)
             elif level[y][x] == '-':
                 Tile('non', x, y)
             elif level[y][x] == '!':
@@ -220,6 +220,9 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
+            elif level[y][x] == '1':
+                Tile('empty', x, y)
+                Tile('телепорт', x, y)
     return new_player, x, y
 pygame.display.set_caption('Перемещение героя')
 start_screen()
@@ -246,6 +249,16 @@ def play(map):
         else:
             menu('lose')
 
+    def teleport(x, y):
+        if level_map[y][x] in '1':
+            for coord_y in range(level_y):
+                for coord_x in range(level_x):
+                    if level_map[coord_y][coord_x] == '1':
+                        if coord_y != y or coord_x != x:
+                            player.go(coord_x, coord_y)
+                            return 0
+        return 1
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -271,6 +284,9 @@ def play(map):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 game_over(1, star)
                                 return 0
+                            if teleport(x, y) == 0:
+                                break
+                            x, y = player.pos
                 if event.key == pygame.K_DOWN:
                     if y < level_y - 1 and level_map[y + 1][x] not in 'ad#ws':
                         while level_map[y + 1][x] not in 'ad#ws':
@@ -290,6 +306,9 @@ def play(map):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 game_over(1, star)
                                 return 0
+                            if teleport(x, y) == 0:
+                                break
+                            x, y = player.pos
                 if event.key == pygame.K_LEFT:
                     if x > 0 and level_map[y][x - 1] not in 'ad#ws':
                         while level_map[y][x - 1] not in 'ad#ws':
@@ -309,6 +328,8 @@ def play(map):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 game_over(1, star)
                                 return 0
+                            teleport(x, y)
+                            x, y = player.pos
                 if event.key == pygame.K_RIGHT:
                     if x < level_x - 1 and level_map[y][x + 1] not in 'ad#ws':
                         while level_map[y][x + 1] not in 'ad#ws':
@@ -328,8 +349,9 @@ def play(map):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
                                 game_over(1, star)
                                 return 0
-        door_group.update()
-
+                            if teleport(x, y) == 0:
+                                break
+                            x, y = player.pos
         tiles_group.draw(screen)
         player_group.draw(screen)
         door_group.draw(screen)
@@ -439,7 +461,7 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (0, 0, width, 40))
             fon = font.render(str(money), 10, pygame.Color('yellow'))
-            screen.blit(fon, (width - len(str(money)) * 38 - 40, 0))
+            screen.blit(fon, (width - len(str(money)) * 20 - 100, 0))
             font = pygame.font.Font(None, 30)
             screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
             font = pygame.font.Font(None, 60)
