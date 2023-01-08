@@ -2,16 +2,17 @@ import sys
 import pygame
 import os
 from time import sleep
-from pygame.locals import *
+from datetime import datetime, timedelta
 
 pygame.init()
+time = timedelta(seconds=10)
+last_update = datetime.now()
 FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 money = 810
 ex = 0
-
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -183,6 +184,7 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '*':
+                Tile('empty', x, y)
                 Tile('диск', x, y)
             if level[y][x] == 'a':
                 Tile('left', x, y)
@@ -320,7 +322,7 @@ def play(map):
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
                             if level_map[y][x] in 'ftgh*':
-                                game_over(1)
+                                game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
                                 pygame.sprite.spritecollideany(player, door_group).kill()
@@ -342,7 +344,7 @@ stars = {'map1': 0, 'map2': 0, 'map3': 0, 'map4': 0,
          'map13': 0, 'map14': 0, 'map15': 0, 'map16': 0, 'map0': 3
          }
 lvl = 1
-energy = 5
+energy = 4
 def menu(lose_or_win=None):
     global lvl
     global ex
@@ -350,6 +352,7 @@ def menu(lose_or_win=None):
     global money
     global player_image
     global player_image_num
+    global last_update
     if ex == lvl:
         ex = 0
         lvl += 1
@@ -379,6 +382,11 @@ def menu(lose_or_win=None):
 
     go = True
     while True:
+        if datetime.now() - last_update > time:
+            # update()
+            last_update = datetime.now()
+            if energy != 5:
+                energy += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -387,7 +395,7 @@ def menu(lose_or_win=None):
                 if y in range(70, 141):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i - 1)] != 0 and energy >= 1 and go:
+                            if stars['map' + str(i - 1)] == 0 and energy >= 1 and go:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i))
@@ -431,7 +439,7 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (0, 0, width, 40))
             fon = font.render(str(money), 10, pygame.Color('yellow'))
-            screen.blit(fon, (width - len(str(money)) * 38 - 60, 0))
+            screen.blit(fon, (width - len(str(money)) * 38 - 40, 0))
             font = pygame.font.Font(None, 30)
             screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
             font = pygame.font.Font(None, 60)
@@ -466,7 +474,7 @@ def menu(lose_or_win=None):
                             screen.blit(padlock, padlock.get_rect().move(j * 100 - 40, i * 100 - 30))
             image = load_image('обрезанная монета.png', 'black')
             dog_rect = image.get_rect(
-                bottomright=(width - len(str(money)) * 10 - 30, image.get_height() + 2))
+                bottomright=(width - 50, image.get_height() + 2))
             screen.blit(image, dog_rect)
             pygame.draw.rect(screen, 'yellow',
                              (width // 2 - 50, height - 50, 100, 30))
