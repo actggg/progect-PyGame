@@ -357,8 +357,6 @@ def play(map):
                             if teleport(x, y):
                                 player.go(*teleport(x, y))
                                 stop_move = True
-                                print(player.pos)
-                                print(1)
         door_group.update()
 
         tiles_group.draw(screen)
