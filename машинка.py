@@ -148,6 +148,21 @@ class Player(pygame.sprite.Sprite):
         self.image = player_image
         self.image = pygame.transform.rotate(self.image, 180)
 
+
+class Monster(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(monster_group)
+        self.image = load_image('монстр.png', -1)
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+        self.coff = 1
+
+    def update(self):
+        self.rect.x += self.coff
+        if self.rect.x - 50 == self.pos[0] or self.rect.x == self.pos[0]:
+            self.coff *= -1
+            self.image = pygame.transform.flip(self.image, True, False)
+
 player = None
 
 # группы спрайтов
@@ -157,6 +172,7 @@ player_group = pygame.sprite.Group()
 money_group = pygame.sprite.Group()
 lvl_group = pygame.sprite.Group()
 door_group = pygame.sprite.Group()
+monster_group = pygame.sprite.Group()
 
 def reboot():
     global all_sprites
@@ -165,12 +181,14 @@ def reboot():
     global money_group
     global lvl_group
     global door_group
+    global monster_group
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     money_group = pygame.sprite.Group()
     lvl_group = pygame.sprite.Group()
     door_group = pygame.sprite.Group()
+    monster_group = pygame.sprite.Group()
 
 def draw(screen, number):
     screen.fill((0, 0, 0))
@@ -224,6 +242,9 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
+            elif level[y][x] == 'M':
+                Tile('empty', x, y)
+                Monster(x, y)
     return new_player, x, y
 pygame.display.set_caption('Перемещение героя')
 start_screen()
@@ -237,7 +258,8 @@ def play(map):
     # doors = AnimatedSprite(load_image("дверь.png", 'white'), 6, 1, 150, 150)
     screen.fill('black')
     running = True
-    stop_move = False
+    fps = 60
+    clock = pygame.time.Clock()
     def game_over(exp, star=None):
         global ex
         global running
@@ -278,7 +300,7 @@ def play(map):
                                 else:
                                     money += pygame.sprite.spritecollideany(player, money_group).price
                                 pygame.sprite.spritecollideany(player, money_group).kill()
-                            if level_map[y][x] in 'ftgh*':
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -358,16 +380,18 @@ def play(map):
                                 player.go(*teleport(x, y))
                                 stop_move = True
         door_group.update()
+        monster_group.update()
 
         tiles_group.draw(screen)
         player_group.draw(screen)
+        monster_group.draw(screen)
         door_group.draw(screen)
         screen.blit(font.render(str(money), True, 'yellow'), (width - 100, 0))
-
+        clock.tick(fps)
         pygame.display.flip()
     pygame.quit()
 
-stars = {'map1': 0, 'map2': 0, 'map3': 0, 'map4': 0,
+stars = {'map1': 1, 'map2': 1, 'map3': 1, 'map4': 1,
          'map5': 0, 'map6': 0, 'map7': 0, 'map8': 0,
          'map9': 0, 'map10': 0, 'map11': 0, 'map12': 0,
          'map13': 0, 'map14': 0, 'map15': 0, 'map16': 0, 'map0': 3
@@ -409,10 +433,11 @@ def menu(lose_or_win=None):
         pygame.display.flip()
         sleep(0.5)
 
-    go = True
+    no_go_shop = True
+    no_go_shop_money = True
+    this_sec_or_no = True
     while True:
         if datetime.now() - last_update > time:
-            # update()
             last_update = datetime.now()
             if energy != 5:
                 energy += 1
@@ -424,7 +449,7 @@ def menu(lose_or_win=None):
                 if y in range(70, 141):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i - 1)] == 0 and energy >= 1 and go:
+                            if stars['map' + str(i - 1)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i))
@@ -432,7 +457,7 @@ def menu(lose_or_win=None):
                 if y in range(170, 241):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 3)] != 0 and energy >= 1 and go:
+                            if stars['map' + str(i + 3)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 4))
@@ -440,7 +465,7 @@ def menu(lose_or_win=None):
                 if y in range(270, 341):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 7)] != 0 and energy >= 1 and go:
+                            if stars['map' + str(i + 7)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 8))
@@ -448,18 +473,19 @@ def menu(lose_or_win=None):
                 if y in range(370, 441):
                     for i in range(1, 5):
                         if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 11)] != 0 and energy >= 1 and go:
+                            if stars['map' + str(i + 11)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i + 12))
                                 return 0
-                if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and go:
-                    go = False
+                if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and no_go_shop:
+                    no_go_shop = False
+                    this_sec_or_no = True
                     print(1)
-                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20):
-                    go = True
+                elif x in range(width - 45, width - 15) and y in range(3, 33):
+                    no_go_shop_money = False
                     print(2)
-        if go:
+        if no_go_shop and no_go_shop_money:
             fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
             screen.blit(fon, (0, 0))
             font = pygame.font.SysFont('Consolas', 38)
@@ -513,7 +539,10 @@ def menu(lose_or_win=None):
             lvl_group.draw(screen)
             pygame.display.flip()
             clock.tick(FPS)
-        else:
+        elif not no_go_shop_money:
+            money += 10
+            no_go_shop_money = True
+        elif not no_go_shop:
             pygame.draw.rect(screen, 'yellow',
                              (width // 2 - 140, height // 2 - 100, 300, 200))
             pygame.draw.rect(screen, 'black',
@@ -527,6 +556,10 @@ def menu(lose_or_win=None):
             screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
                         load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
                                                                                       height // 2 - 80))
+            if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and not this_sec_or_no:
+                no_go_shop = True
+                print(1111)
+            this_sec_or_no = False
             if player_image_num != 2:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('800', False, 'black'), (width // 2 + 35, height // 2 + 20))
@@ -538,13 +571,13 @@ def menu(lose_or_win=None):
                             money -= 200
                             player_image = load_image('персонаж 2.jpg')
                             player_image_num = 1
-                            go = True
+                            no_go_shop = True
                 if y in range(height // 2 - 85, height // 2 + 65):
                     if x in range(width // 2 + 25, width // 2 + 135):
                         if money >= 800 and player_image_num != 2:
                             money -= 800
                             player_image = load_image('персонаж 3.png')
                             player_image_num = 2
-                            go = True
+                            no_go_shop = True
             pygame.display.flip()
 menu()
