@@ -163,6 +163,50 @@ class Monster(pygame.sprite.Sprite):
             self.coff *= -1
             self.image = pygame.transform.flip(self.image, True, False)
 
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(laser_group)
+        self.image = load_image('лазер актив.png', -1)
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+        self.coff = 3
+        self.laser = True
+        self.las = None
+
+
+    def update(self):
+        global laser_help_group
+        if self.laser and self.coff <= 0:
+            self.laser = False
+            self.image = load_image('лазер актив.png', -1)
+            self.las = Laser_helper(self.rect.x, self.rect.y)
+        elif not self.laser and self.coff <= 0:
+            self.laser = True
+            self.image = load_image('лазер пассив.png', -1)
+            if self.las:
+                self.las.kill()
+        else:
+            self.laser = False
+        self.rect.x += self.coff
+        if self.laser:
+            pygame.draw.rect(screen, 'yellow',
+                             (0, self.rect.y, self.rect.x, self.rect.y), 8)
+        if self.rect.x - width + 25 >= self.pos[0] or self.rect.x == self.pos[0]:
+            self.coff *= -1
+            self.image = pygame.transform.flip(self.image, True, False)
+            if self.coff == -1.5:
+                self.image = load_image('лазер пассив.png', -1)
+            else:
+                self.image = load_image('лазер актив.png', -1)
+
+class Laser_helper(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(laser_help_group)
+        self.image = load_image('лазер.png', -1)
+        self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+        self.coff = 3
+
 player = None
 
 # группы спрайтов
@@ -173,6 +217,8 @@ money_group = pygame.sprite.Group()
 lvl_group = pygame.sprite.Group()
 door_group = pygame.sprite.Group()
 monster_group = pygame.sprite.Group()
+laser_group = pygame.sprite.Group()
+laser_help_group = pygame.sprite.Group()
 
 def reboot():
     global all_sprites
@@ -182,6 +228,8 @@ def reboot():
     global lvl_group
     global door_group
     global monster_group
+    global laser_help_group
+    global laser_group
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -189,6 +237,8 @@ def reboot():
     lvl_group = pygame.sprite.Group()
     door_group = pygame.sprite.Group()
     monster_group = pygame.sprite.Group()
+    laser_group = pygame.sprite.Group()
+    laser_help_group = pygame.sprite.Group()
 
 def draw(screen, number):
     screen.fill((0, 0, 0))
@@ -245,6 +295,9 @@ def generate_level(level):
             elif level[y][x] == 'M':
                 Tile('empty', x, y)
                 Monster(x, y)
+            elif level[y][x] == 'L':
+                Tile('empty', x, y)
+                Laser(x, y)
     return new_player, x, y
 pygame.display.set_caption('Перемещение героя')
 start_screen()
@@ -307,7 +360,8 @@ def play(map):
                             player.go(x, y)
                             player.up()
                             star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
+                                    or pygame.sprite.spritecollideany(player, laser_help_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -325,7 +379,8 @@ def play(map):
                             player.go(x, y)
                             player.image = player_image
                             star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
+                                    or pygame.sprite.spritecollideany(player, laser_help_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -343,7 +398,8 @@ def play(map):
                             player.go(x, y)
                             player.left()
                             star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
+                                    or pygame.sprite.spritecollideany(player, laser_help_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -361,7 +417,8 @@ def play(map):
                             player.go(x, y)
                             player.right()
                             star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
+                                    or pygame.sprite.spritecollideany(player, laser_help_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -373,10 +430,14 @@ def play(map):
                                 stop_move = True
         door_group.update()
         monster_group.update()
+        laser_group.update()
         tiles_group.draw(screen)
         player_group.draw(screen)
         monster_group.draw(screen)
+        laser_group.draw(screen)
+        laser_help_group.draw(screen)
         door_group.draw(screen)
+        print(laser_help_group)
         screen.blit(font.render(str(money), True, 'yellow'), (width - 100, 0))
         clock.tick(fps)
         pygame.display.flip()
