@@ -11,7 +11,7 @@ FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-money = 810
+money = 0
 ex = 0
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -133,9 +133,12 @@ class Player(pygame.sprite.Sprite):
         self.pos = (pos_x, pos_y)
 
     def go(self, x, y):
-        self.pos = (x, y)
-        self.rect = self.image.get_rect().move(tile_width * self.pos[0],
-                                               tile_height * self.pos[1])
+        if self.pos != (self.rect.x // tile_width, self.rect.y // tile_height):
+            self.pos = (self.rect.x // tile_width, self.rect.y // tile_height)
+        else:
+            self.rect.x += x
+            self.rect.y += y
+
     def right(self):
         self.image = player_image
         self.image = pygame.transform.rotate(self.image, 90)
@@ -201,7 +204,7 @@ class Laser(pygame.sprite.Sprite):
 
 class Laser_helper(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
-        super().__init__(laser_help_group)
+        super().__init__(monster_group)
         self.image = load_image('лазер.png', -1)
         self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
@@ -345,7 +348,11 @@ def play(map):
                 money += pygame.sprite.spritecollideany(player, money_group).price
             pygame.sprite.spritecollideany(player, money_group).kill()
         return star
-
+    go_up = 0
+    go_down = 0
+    go_right = 0
+    go_left = 0
+    count = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -357,11 +364,10 @@ def play(map):
                         stop_move = False
                         while level_map[y - 1][x] not in 'ad#ws' and not stop_move:
                             x, y = x, y - 1
-                            player.go(x, y)
+                            go_up = True
                             player.up()
                             star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
-                                    or pygame.sprite.spritecollideany(player, laser_help_group):
+                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
                                 game_over(0.5)
                                 return 0
                             if pygame.sprite.spritecollideany(player, door_group):
@@ -376,58 +382,87 @@ def play(map):
                         stop_move = False
                         while level_map[y + 1][x] not in 'ad#ws' and not stop_move:
                             x, y = x, y + 1
-                            player.go(x, y)
+                            go_down = True
                             player.image = player_image
-                            star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
-                                    or pygame.sprite.spritecollideany(player, laser_help_group):
-                                game_over(0.5)
-                                return 0
-                            if pygame.sprite.spritecollideany(player, door_group):
-                                pygame.sprite.spritecollideany(player, door_group).kill()
-                                game_over(1, star)
-                                return 0
-                            if teleport(x, y):
-                                player.go(*teleport(x, y))
-                                stop_move = True
                 if event.key == pygame.K_LEFT:
                     if x > 0 and level_map[y][x - 1] not in 'ad#ws':
                         stop_move = False
                         while level_map[y][x - 1] not in 'ad#ws' and not stop_move:
                             x, y = x - 1, y
-                            player.go(x, y)
+                            go_left = True
                             player.left()
-                            star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
-                                    or pygame.sprite.spritecollideany(player, laser_help_group):
-                                game_over(0.5)
-                                return 0
-                            if pygame.sprite.spritecollideany(player, door_group):
-                                pygame.sprite.spritecollideany(player, door_group).kill()
-                                game_over(1, star)
-                                return 0
-                            if teleport(x, y):
-                                player.go(*teleport(x, y))
-                                stop_move = True
                 if event.key == pygame.K_RIGHT:
                     if x < level_x - 1 and level_map[y][x + 1] not in 'ad#ws':
                         stop_move = False
                         while level_map[y][x + 1] not in 'ad#ws' and not stop_move:
                             x, y = x + 1, y
-                            player.go(x, y)
+                            go_right = True
                             player.right()
-                            star += give_money()
-                            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group)\
-                                    or pygame.sprite.spritecollideany(player, laser_help_group):
-                                game_over(0.5)
-                                return 0
-                            if pygame.sprite.spritecollideany(player, door_group):
-                                pygame.sprite.spritecollideany(player, door_group).kill()
-                                game_over(1, star)
-                                return 0
-                            if teleport(x, y):
-                                player.go(*teleport(x, y))
-                                stop_move = True
+        if pygame.sprite.spritecollideany(player, monster_group):
+            game_over(0.5)
+            return 0
+        x, y = player.pos
+        if go_right:
+            if level_map[y][x + 1] in 'ad#ws':
+                go_right = False
+            star += give_money()
+            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                game_over(0.5)
+                return 0
+            if pygame.sprite.spritecollideany(player, door_group):
+                pygame.sprite.spritecollideany(player, door_group).kill()
+                game_over(1, star)
+                return 0
+            if teleport(x, y):
+                player.go(*teleport(x, y))
+                stop_move = True
+            player.go(1, 0)
+        elif go_left:
+            if level_map[y][x] in 'ad#ws':
+                go_left = False
+            star += give_money()
+            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                game_over(0.5)
+                return 0
+            if pygame.sprite.spritecollideany(player, door_group):
+                pygame.sprite.spritecollideany(player, door_group).kill()
+                game_over(1, star)
+                return 0
+            if teleport(x, y):
+                player.go(*teleport(x, y))
+                stop_move = True
+            player.go(-1, 0)
+        elif go_up:
+            if level_map[y][x] in 'ad#ws':
+                go_up = False
+            star += give_money()
+            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                game_over(0.5)
+                return 0
+            if pygame.sprite.spritecollideany(player, door_group):
+                pygame.sprite.spritecollideany(player, door_group).kill()
+                game_over(1, star)
+                return 0
+            if teleport(x, y):
+                player.go(*teleport(x, y))
+                stop_move = True
+            player.go(0, -1)
+        elif go_down:
+            if level_map[y + 1][x] in 'ad#ws':
+                go_down = False
+            star += give_money()
+            if level_map[y][x] in 'ftgh*' or pygame.sprite.spritecollideany(player, monster_group):
+                game_over(0.5)
+                return 0
+            if pygame.sprite.spritecollideany(player, door_group):
+                pygame.sprite.spritecollideany(player, door_group).kill()
+                game_over(1, star)
+                return 0
+            if teleport(x, y):
+                player.go(*teleport(x, y))
+                stop_move = True
+            player.go(0, 1)
+        print(player.rect.x)
         door_group.update()
         monster_group.update()
         laser_group.update()
@@ -437,7 +472,6 @@ def play(map):
         laser_group.draw(screen)
         laser_help_group.draw(screen)
         door_group.draw(screen)
-        print(laser_help_group)
         screen.blit(font.render(str(money), True, 'yellow'), (width - 100, 0))
         clock.tick(fps)
         pygame.display.flip()
@@ -458,6 +492,7 @@ def menu(lose_or_win=None):
     global player_image
     global player_image_num
     global last_update
+    print(ex)
     if ex == lvl:
         ex = 0
         lvl += 1
@@ -544,7 +579,7 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (0, 0, width, 40))
             fon = font.render(str(money), 10, pygame.Color('yellow'))
-            screen.blit(fon, (width - len(str(money)) * 38 - 40, 0))
+            screen.blit(fon, (width - len(str(money)) * 38 - 38 * 2, 0))
             font = pygame.font.Font(None, 30)
             screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
             font = pygame.font.Font(None, 60)
