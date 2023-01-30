@@ -34,7 +34,7 @@ def start_screen():
     intro_text = []
 
     clock = pygame.time.Clock()
-    fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
+    fon = pygame.transform.scale(load_image('заставка.jpg', 'white'), (500, 500))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
@@ -51,8 +51,7 @@ def start_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 return 0
         pygame.display.flip()
         clock.tick(FPS)
@@ -163,7 +162,7 @@ class Monster(pygame.sprite.Sprite):
             self.coff *= -1
             self.image = pygame.transform.flip(self.image, True, False)
 
-class Laser(pygame.sprite.Sprite):
+class Laser_gun(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
         super().__init__(*group)
         self.image = load_image('лазер актив.png', -1)
@@ -179,7 +178,7 @@ class Laser(pygame.sprite.Sprite):
         if self.laser and self.coff <= 0:
             self.laser = False
             self.image = load_image('лазер актив.png', -1)
-            self.las = Laser_helper(self.rect.x, self.rect.y)
+            self.las = Laser_gun_helper(self.rect.x, self.rect.y)
         elif not self.laser and self.coff <= 0:
             self.laser = True
             self.image = load_image('лазер пассив.png', -1)
@@ -199,13 +198,81 @@ class Laser(pygame.sprite.Sprite):
             else:
                 self.image = load_image('лазер актив.png', -1)
 
-class Laser_helper(pygame.sprite.Sprite):
+class Laser_gun_helper(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(monster_group)
         self.image = load_image('лазер.png', -1)
         self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
+
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = load_image('пушка верх мини.png')
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+        self.laser = Laser_help(pos_x, pos_y, monster_group)
+        self.las = None
+        self.count = 0
+    def update(self):
+        self.count += 1
+        if self.count % 50 == 1:
+            self.laser.kill()
+            self.laser = False
+        if self.count % 50 == 49:
+            self.laser = Laser_help(self.pos[0] // tile_width, self.pos[1] // tile_height, monster_group)
+            print(1)
+
+class Laser_help(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = load_image('лазер верт.png')
+        self.rect = self.image.get_rect().move(tile_width * pos_x + 11, tile_height * (pos_y + 1))
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+
+'''
+    def update(self):
+        self.count += 1
+        if self.count % 25 == 0:
+            self.laser = Laser_help(self.pos[0], self.pos[1], monster_group)
+            sleep(222)
+        if self.count % 25 == 1:
+            self.laser.kill()
+
+class Laser_help(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = load_image('лазер верт.png')
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
+'''
+'''
+    def update(self):
+        global laser_help_group
+        if self.laser and self.coff <= 0:
+            self.laser = False
+            self.las = Laser_gun_helper(self.rect.x, self.rect.y)
+        elif not self.laser and self.coff <= 0:
+            self.laser = True
+            if self.las:
+                self.las.kill()
+        else:
+            self.laser = False
+        if self.laser:
+            pygame.draw.rect(screen, 'yellow',
+                             (0, self.rect.y, self.rect.x, self.rect.y), 8)
+        if self.rect.x - width + 25 >= self.pos[0] or self.rect.x == self.pos[0]:
+            self.coff *= -1
+            self.image = pygame.transform.flip(self.image, True, False)
+
+class Laser_helper(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(monster_group)
+        self.image = load_image('лазер верт.png', -1)
+        self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
+        self.pos = (tile_width * pos_x, tile_height * pos_y)
         self.coff = 3
+'''
 
 player = None
 
@@ -297,6 +364,9 @@ def generate_level(level):
                 Monster(x, y, monster_group)
             elif level[y][x] == 'L':
                 Tile('empty', x, y, tiles_group, all_sprites)
+                Laser_gun(x, y, laser_group)
+            elif level[y][x] == 'N':
+                Tile('empty', x, y, tiles_group, all_sprites)
                 Laser(x, y, laser_group)
     return new_player, x, y
 pygame.display.set_caption('Перемещение героя')
@@ -359,26 +429,26 @@ def play(map):
             elif event.type == pygame.KEYDOWN:
                 x, y = player.pos
                 if event.key == pygame.K_UP:
-                    if y > 0 and level_map[y - 1][x] not in 'ad#ws':
+                    if y > 0 and level_map[y - 1][x] not in 'ad#wsN':
                         x, y = x, y - 1
                         if check_move():
                             go_up = True
                             player.up()
                 if event.key == pygame.K_DOWN:
-                    if y < level_y - 1 and level_map[y + 1][x] not in 'ad#ws':
+                    if y < level_y - 1 and level_map[y + 1][x] not in 'ad#wsN':
                         x, y = x, y + 1
                         if check_move():
                             go_down = True
                             player.image = player_image
                 if event.key == pygame.K_LEFT:
-                    if x > 0 and level_map[y][x - 1] not in 'ad#ws':
+                    if x > 0 and level_map[y][x - 1] not in 'ad#wsN':
                         print(1)
                         x, y = x - 1, y
                         if check_move():
                             go_left = True
                             player.left()
                 if event.key == pygame.K_RIGHT:
-                    if x < level_x - 1 and level_map[y][x + 1] not in 'ad#ws':
+                    if x < level_x - 1 and level_map[y][x + 1] not in 'ad#wsN':
                         x, y = x + 1, y
                         if check_move():
                             go_right = True
@@ -392,7 +462,7 @@ def play(map):
             if count == 25:
                 count = 0
                 player.pos = (player.rect.x // tile_width, player.rect.y // tile_height)
-                if level_map[y][x + 2] in 'ad#ws':
+                if level_map[y][x + 2] in 'ad#wsN':
                     go_right = False
             else:
                 count += 5
@@ -404,7 +474,7 @@ def play(map):
             if count == 25:
                 count = 0
                 player.pos = (player.rect.x // tile_width, player.pos[1])
-                if level_map[y][x - 2] in 'ad#ws':
+                if level_map[y][x - 2] in 'ad#wsN':
                     go_left = False
             else:
                 count += 5
@@ -416,7 +486,7 @@ def play(map):
             if count == 25:
                 count = 0
                 player.pos = (player.rect.x // tile_width, player.rect.y // tile_height)
-                if level_map[y - 2][x] in 'ad#ws':
+                if level_map[y - 2][x] in 'ad#wsN':
                     go_up = False
             else:
                 count += 5
@@ -428,7 +498,7 @@ def play(map):
             if count == 25:
                 count = 0
                 player.pos = (player.rect.x // tile_width, player.rect.y // tile_height)
-                if level_map[y + 2][x] in 'ad#ws':
+                if level_map[y + 2][x] in 'ad#wsN':
                     go_down = False
             else:
                 count += 5
@@ -450,11 +520,11 @@ def play(map):
         monster_group.update()
         laser_group.update()
         tiles_group.draw(screen)
-        player_group.draw(screen)
-        monster_group.draw(screen)
         laser_group.draw(screen)
         laser_help_group.draw(screen)
         door_group.draw(screen)
+        monster_group.draw(screen)
+        player_group.draw(screen)
         screen.blit(font.render(str(money), True, 'yellow'), (width - 100, 0))
         clock.tick(fps)
         pygame.display.flip()
@@ -513,7 +583,7 @@ def menu(lose_or_win=None):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 x, y = event.pos
                 if y in range(70, 141):
                     for i in range(1, 5):
