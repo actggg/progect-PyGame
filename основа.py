@@ -98,15 +98,15 @@ tile_width = tile_height = 25
 
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
+    def __init__(self, tile_type, pos_x, pos_y, *group):
+        super().__init__(*group)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
 
 class Money(pygame.sprite.Sprite):
-        def __init__(self, tile_type, pos_x, pos_y):
-            super().__init__(tiles_group, money_group)
+        def __init__(self, tile_type, pos_x, pos_y, *group):
+            super().__init__(*group)
             self.image = tile_images[tile_type]
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y)
@@ -116,8 +116,8 @@ class Money(pygame.sprite.Sprite):
                 self.price = 10
 
 class Door(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(door_group)
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
         self.image = load_image('квадрат красивый.jpg')
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.pos = (pos_x, pos_y)
@@ -126,8 +126,8 @@ class Door(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.image, 1)
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(player_group)
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
         self.image = player_image
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.pos = (pos_x, pos_y)
@@ -150,8 +150,8 @@ class Player(pygame.sprite.Sprite):
 
 
 class Monster(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(monster_group)
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
         self.image = load_image('монстр.png', -1)
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
@@ -164,8 +164,8 @@ class Monster(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(self.image, True, False)
 
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(laser_group)
+    def __init__(self, pos_x, pos_y, *group):
+        super().__init__(*group)
         self.image = load_image('лазер актив.png', -1)
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
@@ -253,51 +253,51 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '*':
-                Tile('empty', x, y)
-                Tile('диск', x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Tile('диск', x, y, tiles_group, all_sprites)
             if level[y][x] == '1':
-                Tile('empty', x, y)
-                Tile('телепорт', x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Tile('телепорт', x, y, tiles_group, all_sprites)
             if level[y][x] == 'a':
-                Tile('left', x, y)
+                Tile('left', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'd':
-                Tile('right', x, y)
+                Tile('right', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'w':
-                Tile('bottom', x, y)
+                Tile('bottom', x, y, tiles_group, all_sprites)
             elif level[y][x] == 's':
-                Tile('top', x, y)
+                Tile('top', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'f':
-                Tile('leftt', x, y)
+                Tile('leftt', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'h':
-                Tile('rightt', x, y)
+                Tile('rightt', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'g':
-                Tile('bottomm', x, y)
+                Tile('bottomm', x, y, tiles_group, all_sprites)
             elif level[y][x] == 't':
-                Tile('topp', x, y)
+                Tile('topp', x, y, tiles_group, all_sprites)
             elif level[y][x] == '.':
-                Tile('empty', x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
             elif level[y][x] == '#':
-                Tile('all', x, y)
+                Tile('all', x, y, tiles_group, all_sprites)
             elif level[y][x] == 'x':
-                Tile('empty', x, y)
-                new_money = Money('exit', x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Money('exit', x, y, tiles_group, money_group)
             elif level[y][x] == '+':
-                Tile('empty', x, y)
-                new_money = Money('coin', x, y)
+                Tile('empty', x, y, tiles_group)
+                Money('coin', x, y, tiles_group, money_group)
             elif level[y][x] == '-':
-                Tile('non', x, y)
+                Tile('non', x, y, tiles_group)
             elif level[y][x] == '!':
-                Tile('empty', x, y)
-                door = Door(x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Door(x, y, door_group)
             elif level[y][x] == '@':
-                Tile('empty', x, y)
-                new_player = Player(x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                new_player = Player(x, y, player_group)
             elif level[y][x] == 'M':
-                Tile('empty', x, y)
-                Monster(x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Monster(x, y, monster_group)
             elif level[y][x] == 'L':
-                Tile('empty', x, y)
-                Laser(x, y)
+                Tile('empty', x, y, tiles_group, all_sprites)
+                Laser(x, y, laser_group)
     return new_player, x, y
 pygame.display.set_caption('Перемещение героя')
 start_screen()
