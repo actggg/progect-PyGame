@@ -11,8 +11,9 @@ FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-money = 0
+money = 1200
 ex = 0
+my_skin = ['def']
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -546,7 +547,7 @@ def menu(lose_or_win=None):
     global player_image_num
     global last_update
     print(ex)
-    if ex == lvl:
+    if ex >= lvl:
         ex = 0
         lvl += 1
         energy = 5
@@ -569,7 +570,7 @@ def menu(lose_or_win=None):
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
-        screen.blit(font.render('LOSER!!!', False, 'yellow'), (width // 2 - 120, height // 2 - 50))
+        screen.blit(font.render('LOOSE!!!', False, 'yellow'), (width // 2 - 120, height // 2 - 50))
         pygame.display.flip()
         sleep(0.5)
 
@@ -632,9 +633,7 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (0, 0, width, 40))
             fon = font.render(str(money), 10, pygame.Color('yellow'))
-            screen.blit(fon, (width - len(str(money)) * 38 - 38 * 2, 0))
-            font = pygame.font.Font(None, 30)
-            screen.blit(font.render(str(money), False, 'yellow'), (width, 0))
+            screen.blit(fon, (width - (len(str(money)) + 10) * 12, 0))
             font = pygame.font.Font(None, 60)
             screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
             en = load_image('энергия.jpg')
@@ -686,7 +685,7 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (width // 2 - 115, height // 2 - 85, 110, 150), 2)
             screen.blit(load_image('персонаж 2 для магазина.jpg', -1), load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110, height // 2 - 80))
-            if player_image_num != 1:
+            if 'evil' not in my_skin:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
             pygame.draw.rect(screen, 'black',
@@ -694,24 +693,32 @@ def menu(lose_or_win=None):
             screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
                         load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
                                                                                       height // 2 - 80))
-            if player_image_num != 2:
+            if 'creep' not in my_skin:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('800', False, 'black'), (width // 2 + 35, height // 2 + 20))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 if y in range(height // 2 - 85, height // 2 + 65):
                     if x in range(width // 2 - 115, width // 2 - 15):
-                        if money >= 200 and player_image_num != 1:
+                        if money >= 200 and player_image_num != 1 and 'evil' not in my_skin:
                             money -= 200
                             player_image = load_image('персонаж 2.jpg')
                             player_image_num = 1
                             no_go_shop = True
+                            my_skin.append('evil')
+                        elif 'evil' not in my_skin:
+                            player_image = load_image('персонаж 2.jpg')
+                            no_go_shop = True
                 if y in range(height // 2 - 85, height // 2 + 65):
                     if x in range(width // 2 + 25, width // 2 + 135):
-                        if money >= 800 and player_image_num != 2:
+                        if money >= 800 and player_image_num != 2 and 'creep' not in my_skin:
                             money -= 800
                             player_image = load_image('персонаж 3.png')
                             player_image_num = 2
+                            no_go_shop = True
+                            my_skin.append('creep')
+                        elif 'creep' in my_skin:
+                            player_image = load_image('персонаж 3.png')
                             no_go_shop = True
             pygame.display.flip()
 menu()
