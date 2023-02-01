@@ -9,7 +9,8 @@ pygame.init()
 data = open('regist.csv', encoding='utf-8').read()
 for row in data.split('/n'):
     account = row.split(';')
-    print(account)
+death = pygame.mixer.Sound('data/mario_bros_die.mp3')
+win = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
 money = int(account[1])
 ex = float(account[2])
 lvl = int(account[0])
@@ -116,7 +117,7 @@ else:
     player_image = load_image('персонаж 3.png')
     player_image_num = 2
 
-#door_image = load_image('exit.gif')
+
 
 tile_width = tile_height = 25
 
@@ -373,8 +374,10 @@ def play(map):
         ex += exp
         if exp == 1:
             menu('win')
+            win.play()
         else:
             menu('lose')
+            death.play()
 
     def teleport(x, y):
         if level_map[y][x] in '1':
@@ -405,7 +408,7 @@ def play(map):
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                terminate()
             elif event.type == pygame.KEYDOWN:
                 x, y = player.pos
                 if event.key == pygame.K_UP:
@@ -537,6 +540,7 @@ def menu(lose_or_win=None):
         pygame.display.flip()
         sleep(2)
     if lose_or_win == 'win':
+        win.play()
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
@@ -544,6 +548,7 @@ def menu(lose_or_win=None):
         pygame.display.flip()
         sleep(0.5)
     if lose_or_win == 'lose':
+        death.play()
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
