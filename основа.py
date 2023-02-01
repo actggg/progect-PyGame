@@ -587,6 +587,8 @@ def menu(lose_or_win=None):
                                 reboot()
                                 play('map' + str(i + 6))
                                 return 0
+                if y in range(height - 40, height) and x in range(width - 40, width):
+                    restart()
                 if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and no_go_shop:
                     no_go_shop = False
                 elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and not no_go_shop:
@@ -607,6 +609,10 @@ def menu(lose_or_win=None):
             screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
             en = load_image('энергия.jpg')
             screen.blit(en, en.get_rect().move(width // 2 - 100, 5))
+            res = load_image('рестарт.png')
+            pygame.draw.rect(screen, 'yellow',
+                             (width - 40, height - 40, 40, 40))
+            screen.blit(res, en.get_rect().move(width - 40, height - 40))
             for i in range(1, energy + 1):
                 pygame.draw.rect(screen, 'yellow',
                                  (width // 2 - 80 + i * 22, 5, 20, 30))
