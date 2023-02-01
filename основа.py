@@ -3,17 +3,23 @@ import pygame
 import os
 from time import sleep
 from datetime import datetime, timedelta
+import csv
 
 pygame.init()
+data = open('regist.csv', encoding='utf-8').read()
+for row in data.split('/n'):
+    account = row.split(';')
+    print(account)
+money = int(account[1])
+ex = float(account[2])
+lvl = int(account[0])
 time = timedelta(seconds=10)
 last_update = datetime.now()
 FPS = 50
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
-money = 1200
-ex = 0
-my_skin = ['def']
+my_skin = account[3].split()
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -29,6 +35,23 @@ def load_image(name, colorkey=None):
     return image
 
 def terminate():
+    with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
+        writer = csv.writer(
+            csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        inf = [lvl, money, ex, ' '.join(my_skin)]
+        for num in range(1, 10):
+            inf.append(stars['map' + str(num)])
+        inf.append(str(player_image_num))
+        print(inf)
+        writer.writerow(inf)
+    pygame.quit()
+    sys.exit()
+
+def restart():
+    with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
+        writer = csv.writer(
+            csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow('1;0;0;def;0;0;0;0;0;0;0;0;0;0'.split(';'))
     pygame.quit()
     sys.exit()
 def start_screen():
@@ -57,18 +80,11 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-
-
 def load_level(filename):
     filename = "lvls/" + filename
-    # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line for line in mapFile]
-
-    # и подсчитываем максимальную длину
     max_width = max(map(len, level_map))
-
-    # дополняем каждую строку пустыми клетками ('.')
     return list(map(lambda x: x.ljust(max_width, '-'), level_map))
 
 
@@ -90,8 +106,16 @@ tile_images = {
     'диск': load_image('диск.png', -1),
     'телепорт': load_image('портал.jpg', -1)
 }
-player_image = load_image('куб.jpeg')
-player_image_num = 0
+if '0' in account[-1]:
+    player_image = load_image('куб.jpeg')
+    player_image_num = 0
+elif '1' in account[-1]:
+    player_image = load_image('персонаж 2.jpg')
+    player_image_num = 1
+else:
+    player_image = load_image('персонаж 3.png')
+    player_image_num = 2
+
 #door_image = load_image('exit.gif')
 
 tile_width = tile_height = 25
@@ -222,7 +246,6 @@ class Laser(pygame.sprite.Sprite):
             self.laser = False
         if self.count % 50 == 49:
             self.laser = Laser_help(self.pos[0] // tile_width, self.pos[1] // tile_height, monster_group)
-            print(1)
 
 class Laser_help(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -231,53 +254,9 @@ class Laser_help(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * pos_x + 11, tile_height * (pos_y + 1))
         self.pos = (tile_width * pos_x, tile_height * pos_y)
 
-'''
-    def update(self):
-        self.count += 1
-        if self.count % 25 == 0:
-            self.laser = Laser_help(self.pos[0], self.pos[1], monster_group)
-            sleep(222)
-        if self.count % 25 == 1:
-            self.laser.kill()
-
-class Laser_help(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, *group):
-        super().__init__(*group)
-        self.image = load_image('лазер верт.png')
-        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-        self.pos = (tile_width * pos_x, tile_height * pos_y)
-'''
-'''
-    def update(self):
-        global laser_help_group
-        if self.laser and self.coff <= 0:
-            self.laser = False
-            self.las = Laser_gun_helper(self.rect.x, self.rect.y)
-        elif not self.laser and self.coff <= 0:
-            self.laser = True
-            if self.las:
-                self.las.kill()
-        else:
-            self.laser = False
-        if self.laser:
-            pygame.draw.rect(screen, 'yellow',
-                             (0, self.rect.y, self.rect.x, self.rect.y), 8)
-        if self.rect.x - width + 25 >= self.pos[0] or self.rect.x == self.pos[0]:
-            self.coff *= -1
-            self.image = pygame.transform.flip(self.image, True, False)
-
-class Laser_helper(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(monster_group)
-        self.image = load_image('лазер верт.png', -1)
-        self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
-        self.pos = (tile_width * pos_x, tile_height * pos_y)
-        self.coff = 3
-'''
 
 player = None
 
-# группы спрайтов
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
@@ -443,7 +422,6 @@ def play(map):
                             player.image = player_image
                 if event.key == pygame.K_LEFT:
                     if x > 0 and level_map[y][x - 1] not in 'ad#wsN':
-                        print(1)
                         x, y = x - 1, y
                         if check_move():
                             go_left = True
@@ -531,13 +509,13 @@ def play(map):
         pygame.display.flip()
     pygame.quit()
 
-stars = {'map1': 1, 'map2': 1, 'map3': 1, 'map4': 1,
-         'map5': 1, 'map6': 0, 'map7': 0, 'map8': 0,
-         'map9': 0, 'map10': 0, 'map11': 0, 'map12': 0,
-         'map13': 0, 'map14': 0, 'map15': 0, 'map16': 0, 'map0': 3
+stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6]),
+         'map4': int(account[7]), 'map5': int(account[8]), 'map6': int(account[9]),
+         'map7': int(account[10]), 'map8': int(account[11]),
+         'map9': int(account[12]), 'map0': 3
          }
-lvl = 1
-energy = 4
+
+energy = 5
 def menu(lose_or_win=None):
     global lvl
     global ex
@@ -546,7 +524,6 @@ def menu(lose_or_win=None):
     global player_image
     global player_image_num
     global last_update
-    print(ex)
     if ex >= lvl:
         ex = 0
         lvl += 1
@@ -586,37 +563,29 @@ def menu(lose_or_win=None):
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 x, y = event.pos
-                if y in range(70, 141):
-                    for i in range(1, 5):
-                        if x in range(i * 100 - 40, i * 100 + 30):
+                if y in range(100, 201):
+                    for i in range(1, 4):
+                        if x in range(i * 120 - 40, i * 120 + 60):
                             if stars['map' + str(i - 1)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
                                 play('map' + str(i))
                                 return 0
-                if y in range(170, 241):
-                    for i in range(1, 5):
-                        if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 3)] != 0 and energy >= 1 and no_go_shop:
+                if y in range(200, 301):
+                    for i in range(1, 4):
+                        if x in range(i * 120 - 40, i * 120 + 60):
+                            if stars['map' + str(i + 2)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
-                                play('map' + str(i + 4))
+                                play('map' + str(i + 3))
                                 return 0
-                if y in range(270, 341):
-                    for i in range(1, 5):
-                        if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 7)] != 0 and energy >= 1 and no_go_shop:
+                if y in range(300, 401):
+                    for i in range(1, 4):
+                        if x in range(i * 120 - 40, i * 120 + 60):
+                            if stars['map' + str(i + 5)] != 0 and energy >= 1 and no_go_shop:
                                 energy -= 1
                                 reboot()
-                                play('map' + str(i + 8))
-                                return 0
-                if y in range(370, 441):
-                    for i in range(1, 5):
-                        if x in range(i * 100 - 40, i * 100 + 30):
-                            if stars['map' + str(i + 11)] != 0 and energy >= 1 and no_go_shop:
-                                energy -= 1
-                                reboot()
-                                play('map' + str(i + 12))
+                                play('map' + str(i + 6))
                                 return 0
                 if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and no_go_shop:
                     no_go_shop = False
@@ -652,18 +621,18 @@ def menu(lose_or_win=None):
             num = 0
             star = load_image('звезда для меню.png', -1)
             padlock = load_image('замок.webp', -2)
-            for i in range(1, 5):
-                for j in range(1, 5):
+            for i in range(1, 4):
+                for j in range(1, 4):
                     num += 1
-                    font = pygame.font.SysFont('Consolas', 70)
+                    font = pygame.font.SysFont('Consolas', 100)
                     pygame.draw.rect(screen, 'blue',
-                                     (j * 100 - 40, i * 100 - 30, 75, 75))
-                    screen.blit(font.render(str(num), False, 'black'), (j * 100 - 40, i * 100 - 30))
+                                     (j * 120 - 40, i * 120 - 30, 100, 100))
+                    screen.blit(font.render(str(num), False, 'black'), (j * 120 - 40, i * 120 - 30))
                     for x in range(1, stars['map' + str(num)] + 1):
-                        screen.blit(star, star.get_rect().move(j * 100 - 40 + (x - 1) * 25, i * 100 + 20))
+                        screen.blit(star, star.get_rect().move(j * 120 - 30 + (x - 1) * 30, i * 120 + 45))
                     if i != 1 or j != 1:
                         if stars['map' + str(num - 1)] == 0:
-                            screen.blit(padlock, padlock.get_rect().move(j * 100 - 40, i * 100 - 30))
+                            screen.blit(padlock, padlock.get_rect().move(j * 120 - 40, i * 120 - 30))
             image = load_image('обрезанная монета.png', 'black')
             dog_rect = image.get_rect(
                 bottomright=(width - 50, image.get_height() + 2))
@@ -685,17 +654,23 @@ def menu(lose_or_win=None):
             pygame.draw.rect(screen, 'black',
                              (width // 2 - 115, height // 2 - 85, 110, 150), 2)
             screen.blit(load_image('персонаж 2 для магазина.jpg', -1), load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110, height // 2 - 80))
-            if 'evil' not in my_skin:
-                font = pygame.font.Font(None, 70)
-                screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
             pygame.draw.rect(screen, 'black',
                              (width // 2 + 25, height // 2 - 85, 110, 150), 2)
             screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
                         load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
                                                                                       height // 2 - 80))
+            if 'evil' not in my_skin:
+                font = pygame.font.Font(None, 70)
+                screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
+            else:
+                font = pygame.font.Font(None, 45)
+                screen.blit(font.render('Одеть', False, 'black'), (width // 2 - 105, height // 2 + 20))
             if 'creep' not in my_skin:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('800', False, 'black'), (width // 2 + 35, height // 2 + 20))
+            else:
+                font = pygame.font.Font(None, 45)
+                screen.blit(font.render('Одеть', False, 'black'), (width // 2 + 35, height // 2 + 20))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 if y in range(height // 2 - 85, height // 2 + 65):
@@ -706,8 +681,9 @@ def menu(lose_or_win=None):
                             player_image_num = 1
                             no_go_shop = True
                             my_skin.append('evil')
-                        elif 'evil' not in my_skin:
+                        elif 'evil' in my_skin:
                             player_image = load_image('персонаж 2.jpg')
+                            player_image_num = 1
                             no_go_shop = True
                 if y in range(height // 2 - 85, height // 2 + 65):
                     if x in range(width // 2 + 25, width // 2 + 135):
@@ -719,6 +695,7 @@ def menu(lose_or_win=None):
                             my_skin.append('creep')
                         elif 'creep' in my_skin:
                             player_image = load_image('персонаж 3.png')
+                            player_image_num = 2
                             no_go_shop = True
             pygame.display.flip()
 menu()
