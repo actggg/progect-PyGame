@@ -1,10 +1,10 @@
-import sys
-import pygame
-import os
-from time import sleep
-from datetime import datetime, timedelta
 import csv
+import os
+import sys
+from datetime import datetime, timedelta
+from time import sleep
 
+import pygame
 
 pygame.init()
 data = open('regist.csv', encoding='utf-8').read()
@@ -13,7 +13,7 @@ for row in data.split('/n'):
 death = pygame.mixer.Sound('data/mario_bros_die.mp3')
 win = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
 money = int(account[1])
-ex = float(account[2])
+experience = float(account[2])
 lvl = int(account[0])
 time = timedelta(seconds=10)
 last_update = datetime.now()
@@ -27,6 +27,8 @@ stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6
          'map7': int(account[10]), 'map8': int(account[11]),
          'map9': int(account[12]), 'map0': 3
          }
+
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -41,17 +43,19 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey)
     return image
 
+
 def terminate():
     with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
         writer = csv.writer(
             csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        inf = [lvl, money, ex, ' '.join(my_skin)]
+        inf = [lvl, money, experience, ' '.join(my_skin)]
         for num in range(1, 10):
             inf.append(stars['map' + str(num)])
         inf.append(str(player_image_num))
         writer.writerow(inf)
     pygame.quit()
     sys.exit()
+
 
 def restart():
     with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
@@ -60,6 +64,8 @@ def restart():
         writer.writerow('1;0;0;def;0;0;0;0;0;0;0;0;0;0'.split(';'))
     pygame.quit()
     sys.exit()
+
+
 def start_screen():
     intro_text = ['Зловещие подземелья']
 
@@ -98,6 +104,7 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
+
 def load_level(filename):
     filename = "lvls/" + filename
     with open(filename, 'r') as mapFile:
@@ -134,8 +141,6 @@ else:
     player_image = load_image('персонаж 3.png')
     player_image_num = 2
 
-
-
 tile_width = tile_height = 25
 
 
@@ -146,16 +151,18 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
 
+
 class Money(pygame.sprite.Sprite):
-        def __init__(self, tile_type, pos_x, pos_y, *group):
-            super().__init__(*group)
-            self.image = tile_images[tile_type]
-            self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
-            if tile_type == 'coin':
-                self.price = 1
-            else:
-                self.price = 10
+    def __init__(self, tile_type, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
+        if tile_type == 'coin':
+            self.price = 1
+        else:
+            self.price = 10
+
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -166,6 +173,7 @@ class Door(pygame.sprite.Sprite):
 
     def update(self):
         self.image = pygame.transform.rotate(self.image, 1)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -205,6 +213,7 @@ class Monster(pygame.sprite.Sprite):
             self.coff *= -1
             self.image = pygame.transform.flip(self.image, True, False)
 
+
 class Laser_gun(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
         super().__init__(*group)
@@ -214,7 +223,6 @@ class Laser_gun(pygame.sprite.Sprite):
         self.coff = 3
         self.laser = True
         self.las = None
-
 
     def update(self):
         global laser_help_group
@@ -241,12 +249,14 @@ class Laser_gun(pygame.sprite.Sprite):
             else:
                 self.image = load_image('лазер актив.png', -1)
 
+
 class Laser_gun_helper(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(monster_group)
         self.image = load_image('лазер.png', -1)
         self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
+
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -257,6 +267,7 @@ class Laser(pygame.sprite.Sprite):
         self.laser = Laser_help(pos_x, pos_y, monster_group)
         self.las = None
         self.count = 0
+
     def update(self):
         self.count += 1
         if self.count % 50 == 1:
@@ -264,6 +275,7 @@ class Laser(pygame.sprite.Sprite):
             self.laser = False
         if self.count % 50 == 49:
             self.laser = Laser_help(self.pos[0] // tile_width, self.pos[1] // tile_height, monster_group)
+
 
 class Laser_help(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -284,6 +296,7 @@ door_group = pygame.sprite.Group()
 monster_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
 laser_help_group = pygame.sprite.Group()
+
 
 def reboot():
     global all_sprites
@@ -360,11 +373,15 @@ def generate_level(level):
                 Tile('empty', x, y, tiles_group, all_sprites)
                 Laser(x, y, laser_group)
     return new_player, x, y
+
+
 pygame.display.set_caption('меню')
 start_screen()
 star = 0
+
+
 def play(map):
-    global ex
+    global experience
     global money
     pygame.display.set_caption('игра')
     star = 0
@@ -375,14 +392,15 @@ def play(map):
     running = True
     fps = 60
     clock = pygame.time.Clock()
+
     def game_over(exp, star=None):
-        global ex
+        global experience
         global running
         running = False
         if star:
             if stars[map] < star:
                 stars[map] = star
-        ex += exp
+        experience += exp
         if exp == 1:
             menu('win')
             win.play()
@@ -397,10 +415,12 @@ def play(map):
                     if level_map[coord_y][coord_x] == '1':
                         if coord_y != y or coord_x != x:
                             return 25 * (coord_x + 1), 25 * coord_y
+
     def check_move():
         if not go_up and not go_down and not go_right and not go_left:
             return True
         return False
+
     def give_money():
         global money
         star = 0
@@ -411,6 +431,7 @@ def play(map):
                 money += pygame.sprite.spritecollideany(player, money_group).price
             pygame.sprite.spritecollideany(player, money_group).kill()
         return star
+
     go_up = False
     go_down = False
     go_right = False
@@ -525,17 +546,19 @@ def play(map):
 
 
 energy = 5
+
+
 def menu(lose_or_win=None):
     global lvl
-    global ex
+    global experience
     global energy
     global money
     global player_image
     global player_image_num
     global last_update
     pygame.display.set_caption('меню')
-    if ex >= lvl:
-        ex = 0
+    if experience >= lvl:
+        experience = 0
         lvl += 1
         energy = 5
         money += 50 * lvl
@@ -603,7 +626,8 @@ def menu(lose_or_win=None):
                     restart()
                 if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and no_go_shop:
                     no_go_shop = False
-                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and not no_go_shop:
+                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50,
+                                                                                 height - 20) and not no_go_shop:
                     no_go_shop = True
                 elif x in range(width - 45, width - 15) and y in range(3, 33):
                     no_go_shop_money = False
@@ -671,12 +695,14 @@ def menu(lose_or_win=None):
                              (width // 2 - 140, height // 2 - 100, 300, 200))
             pygame.draw.rect(screen, 'black',
                              (width // 2 - 115, height // 2 - 85, 110, 150), 2)
-            screen.blit(load_image('персонаж 2 для магазина.jpg', -1), load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110, height // 2 - 80))
+            screen.blit(load_image('персонаж 2 для магазина.jpg', -1),
+                        load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110,
+                                                                                      height // 2 - 80))
             pygame.draw.rect(screen, 'black',
                              (width // 2 + 25, height // 2 - 85, 110, 150), 2)
             screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
                         load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
-                                                                                      height // 2 - 80))
+                                                                                            height // 2 - 80))
             if 'evil' not in my_skin:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
@@ -716,4 +742,6 @@ def menu(lose_or_win=None):
                             player_image_num = 2
                             no_go_shop = True
             pygame.display.flip()
+
+
 menu()
