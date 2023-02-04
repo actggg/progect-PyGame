@@ -7,26 +7,6 @@ import csv
 
 
 pygame.init()
-data = open('regist.csv', encoding='utf-8').read()
-for row in data.split('/n'):
-    account = row.split(';')
-death = pygame.mixer.Sound('data/mario_bros_die.mp3')
-win = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
-money = int(account[1])
-ex = float(account[2])
-lvl = int(account[0])
-time = timedelta(seconds=10)
-last_update = datetime.now()
-FPS = 50
-size = width, height = 500, 500
-screen = pygame.display.set_mode(size)
-clock = pygame.time.Clock()
-my_skin = account[3].split()
-stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6]),
-         'map4': int(account[7]), 'map5': int(account[8]), 'map6': int(account[9]),
-         'map7': int(account[10]), 'map8': int(account[11]),
-         'map9': int(account[12]), 'map0': 3
-         }
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -104,40 +84,6 @@ def load_level(filename):
         level_map = [line for line in mapFile]
     max_width = max(map(len, level_map))
     return list(map(lambda x: x.ljust(max_width, '-'), level_map))
-
-
-tile_images = {
-    'left': pygame.transform.rotate(load_image('право.png'), 180),
-    'right': load_image('право.png'),
-    'bottom': pygame.transform.rotate(load_image('право.png'), 270),
-    'top': pygame.transform.rotate(load_image('право.png'), 90),
-    'leftt': pygame.transform.rotate(load_image('иглы.png'), 90),
-    'rightt': pygame.transform.rotate(load_image('иглы.png'), 270),
-    'topp': load_image('иглы.png', 'red'),
-    'bottomm': pygame.transform.rotate(load_image('иглы.png', 'red'), 180),
-    'all': load_image('стена.png'),
-    'empty': load_image('тёмнофиолетовый фон.png'),
-    'non': load_image('пусто.jpg', 'red'),
-    'coin': load_image('звезда для игры.png'),
-    'exit': load_image('сундук1.png', -1),
-    'портал': load_image('квадрат красивый.jpg'),
-    'диск': load_image('диск.png', -1),
-    'телепорт': load_image('портал.jpg', -1)
-}
-if '0' in account[-1]:
-    player_image = load_image('куб.jpeg')
-    player_image_num = 0
-elif '1' in account[-1]:
-    player_image = load_image('персонаж 2.jpg')
-    player_image_num = 1
-else:
-    player_image = load_image('персонаж 3.png')
-    player_image_num = 2
-
-
-
-tile_width = tile_height = 25
-
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y, *group):
@@ -273,17 +219,6 @@ class Laser_help(pygame.sprite.Sprite):
         self.pos = (tile_width * pos_x, tile_height * pos_y)
 
 
-player = None
-
-all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-money_group = pygame.sprite.Group()
-lvl_group = pygame.sprite.Group()
-door_group = pygame.sprite.Group()
-monster_group = pygame.sprite.Group()
-laser_group = pygame.sprite.Group()
-laser_help_group = pygame.sprite.Group()
 
 def reboot():
     global all_sprites
@@ -360,9 +295,6 @@ def generate_level(level):
                 Tile('empty', x, y, tiles_group, all_sprites)
                 Laser(x, y, laser_group)
     return new_player, x, y
-pygame.display.set_caption('меню')
-start_screen()
-star = 0
 def play(map):
     global ex
     global money
@@ -522,9 +454,6 @@ def play(map):
         clock.tick(fps)
         pygame.display.flip()
     pygame.quit()
-
-
-energy = 5
 def menu(lose_or_win=None):
     global lvl
     global ex
@@ -716,4 +645,68 @@ def menu(lose_or_win=None):
                             player_image_num = 2
                             no_go_shop = True
             pygame.display.flip()
+data = open('regist.csv', encoding='utf-8').read()
+for row in data.split('/n'):
+    account = row.split(';')
+death = pygame.mixer.Sound('data/mario_bros_die.mp3')
+win = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
+money = int(account[1])
+ex = float(account[2])
+lvl = int(account[0])
+time = timedelta(seconds=10)
+last_update = datetime.now()
+FPS = 50
+size = width, height = 500, 500
+screen = pygame.display.set_mode(size)
+clock = pygame.time.Clock()
+my_skin = account[3].split()
+stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6]),
+         'map4': int(account[7]), 'map5': int(account[8]), 'map6': int(account[9]),
+         'map7': int(account[10]), 'map8': int(account[11]),
+         'map9': int(account[12]), 'map0': 3
+         }
+tile_images = {
+    'left': pygame.transform.rotate(load_image('право.png'), 180),
+    'right': load_image('право.png'),
+    'bottom': pygame.transform.rotate(load_image('право.png'), 270),
+    'top': pygame.transform.rotate(load_image('право.png'), 90),
+    'leftt': pygame.transform.rotate(load_image('иглы.png'), 90),
+    'rightt': pygame.transform.rotate(load_image('иглы.png'), 270),
+    'topp': load_image('иглы.png', 'red'),
+    'bottomm': pygame.transform.rotate(load_image('иглы.png', 'red'), 180),
+    'all': load_image('стена.png'),
+    'empty': load_image('тёмнофиолетовый фон.png'),
+    'non': load_image('пусто.jpg', 'red'),
+    'coin': load_image('звезда для игры.png'),
+    'exit': load_image('сундук1.png', -1),
+    'портал': load_image('квадрат красивый.jpg'),
+    'диск': load_image('диск.png', -1),
+    'телепорт': load_image('портал.jpg', -1)
+}
+if '0' in account[-1]:
+    player_image = load_image('куб.jpeg')
+    player_image_num = 0
+elif '1' in account[-1]:
+    player_image = load_image('персонаж 2.jpg')
+    player_image_num = 1
+else:
+    player_image = load_image('персонаж 3.png')
+    player_image_num = 2
+tile_width = tile_height = 25
+player = None
+
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+money_group = pygame.sprite.Group()
+lvl_group = pygame.sprite.Group()
+door_group = pygame.sprite.Group()
+monster_group = pygame.sprite.Group()
+laser_group = pygame.sprite.Group()
+laser_help_group = pygame.sprite.Group()
+pygame.display.set_caption('меню')
+start_screen()
+star = 0
+energy = 5
+tile_width = tile_height = 25
 menu()
