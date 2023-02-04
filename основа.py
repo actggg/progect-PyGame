@@ -288,13 +288,6 @@ def reboot():
     laser_group = pygame.sprite.Group()
     laser_help_group = pygame.sprite.Group()
 
-def draw(screen, number):
-    screen.fill((0, 0, 0))
-    font = pygame.font.Font(None, 50)
-    text = font.render(str(number), True, (100, 255, 100))
-    text_x = width // 2 - text.get_width() // 2
-    text_y = height // 2 - text.get_height() // 2
-    screen.blit(text, (text_x, text_y))
 
 def generate_level(level):
     new_player, x, y = None, None, None
