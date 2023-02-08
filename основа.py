@@ -1,37 +1,29 @@
-import sys
-import pygame
-import os
-from time import sleep
-from datetime import datetime, timedelta
 import csv
+import sys
+from datetime import datetime, timedelta
+from time import sleep
 
+import pygame
 
 pygame.init()
-def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f'Файл {fullname}, не найден')
-        sys.exit()
-    image = pygame.image.load(fullname)
-    if colorkey is None:
-        image = image.convert_alpha()
-    elif colorkey == -1:
-        image.set_colorkey(image.get_at((0, 0)))
-    else:
-        image.set_colorkey(colorkey)
-    return image
+size = width, height = 500, 500
+screen = pygame.display.set_mode(size)
+
+from classes import *
+
 
 def terminate():
     with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
         writer = csv.writer(
             csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        inf = [lvl, money, ex, ' '.join(my_skin)]
+        inf = [level, money, experience, ' '.join(my_skin)]
         for num in range(1, 10):
             inf.append(stars['map' + str(num)])
         inf.append(str(player_image_num))
         writer.writerow(inf)
     pygame.quit()
     sys.exit()
+
 
 def restart():
     with open('regist.csv', 'w', newline='', encoding="utf8") as csvfile:
@@ -40,10 +32,11 @@ def restart():
         writer.writerow('1;0;0;def;0;0;0;0;0;0;0;0;0;0'.split(';'))
     pygame.quit()
     sys.exit()
+
+
 def start_screen():
     intro_text = ['Зловещие подземелья']
 
-    clock = pygame.time.Clock()
     fon = pygame.transform.scale(load_image('заставка.jpg', 'white'), (500, 500))
     screen.blit(fon, (0, 0))
     font = pygame.font.SysFont("impact", 40)
@@ -76,7 +69,7 @@ def start_screen():
                 if x in range(274, 361) and y in range(418, 463):
                     terminate()
         pygame.display.flip()
-        clock.tick(FPS)
+
 
 def load_level(filename):
     filename = "lvls/" + filename
@@ -85,6 +78,8 @@ def load_level(filename):
     max_width = max(map(len, level_map))
     return list(map(lambda x: x.ljust(max_width, '-'), level_map))
 
+
+'''
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y, *group):
         super().__init__(*group)
@@ -92,16 +87,18 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
 
+
 class Money(pygame.sprite.Sprite):
-        def __init__(self, tile_type, pos_x, pos_y, *group):
-            super().__init__(*group)
-            self.image = tile_images[tile_type]
-            self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
-            if tile_type == 'coin':
-                self.price = 1
-            else:
-                self.price = 10
+    def __init__(self, tile_type, pos_x, pos_y, *group):
+        super().__init__(*group)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
+        if tile_type == 'coin':
+            self.price = 1
+        else:
+            self.price = 10
+
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -112,6 +109,7 @@ class Door(pygame.sprite.Sprite):
 
     def update(self):
         self.image = pygame.transform.rotate(self.image, 1)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -151,6 +149,7 @@ class Monster(pygame.sprite.Sprite):
             self.coff *= -1
             self.image = pygame.transform.flip(self.image, True, False)
 
+
 class Laser_gun(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
         super().__init__(*group)
@@ -160,7 +159,6 @@ class Laser_gun(pygame.sprite.Sprite):
         self.coff = 3
         self.laser = True
         self.las = None
-
 
     def update(self):
         global laser_help_group
@@ -187,12 +185,14 @@ class Laser_gun(pygame.sprite.Sprite):
             else:
                 self.image = load_image('лазер актив.png', -1)
 
+
 class Laser_gun_helper(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(monster_group)
         self.image = load_image('лазер.png', -1)
         self.rect = self.image.get_rect().move(0 + pos_x - width, pos_y + 8)
         self.pos = (tile_width * pos_x, tile_height * pos_y)
+
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
@@ -203,6 +203,7 @@ class Laser(pygame.sprite.Sprite):
         self.laser = Laser_help(pos_x, pos_y, monster_group)
         self.las = None
         self.count = 0
+
     def update(self):
         self.count += 1
         if self.count % 50 == 1:
@@ -211,34 +212,22 @@ class Laser(pygame.sprite.Sprite):
         if self.count % 50 == 49:
             self.laser = Laser_help(self.pos[0] // tile_width, self.pos[1] // tile_height, monster_group)
 
+
 class Laser_help(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, *group):
         super().__init__(*group)
         self.image = load_image('лазер верт.png')
         self.rect = self.image.get_rect().move(tile_width * pos_x + 11, tile_height * (pos_y + 1))
         self.pos = (tile_width * pos_x, tile_height * pos_y)
-
+'''
 
 
 def reboot():
-    global all_sprites
-    global tiles_group
-    global player_group
-    global money_group
-    global lvl_group
-    global door_group
-    global monster_group
-    global laser_help_group
-    global laser_group
-    all_sprites = pygame.sprite.Group()
-    tiles_group = pygame.sprite.Group()
-    player_group = pygame.sprite.Group()
-    money_group = pygame.sprite.Group()
-    lvl_group = pygame.sprite.Group()
-    door_group = pygame.sprite.Group()
-    monster_group = pygame.sprite.Group()
-    laser_group = pygame.sprite.Group()
-    laser_help_group = pygame.sprite.Group()
+    sprite_groups = [all_sprites, tiles_group, player_group, money_group, door_group,
+                     monster_group, laser_group, laser_help_group]
+    for sprite_group in sprite_groups:
+        for sprite in sprite_group:
+            sprite.kill()
 
 
 def generate_level(level):
@@ -284,19 +273,21 @@ def generate_level(level):
                 Door(x, y, door_group)
             elif level[y][x] == '@':
                 Tile('empty', x, y, tiles_group, all_sprites)
-                new_player = Player(x, y, player_group)
+                new_player = Player(x, y, player_image, player_group)
             elif level[y][x] == 'M':
                 Tile('empty', x, y, tiles_group, all_sprites)
                 Monster(x, y, monster_group)
             elif level[y][x] == 'L':
                 Tile('empty', x, y, tiles_group, all_sprites)
-                Laser_gun(x, y, laser_group)
+                Laser_gun(x, y, laser_group, monster_group)
             elif level[y][x] == 'N':
                 Tile('empty', x, y, tiles_group, all_sprites)
-                Laser(x, y, laser_group)
+                Laser(x, y, laser_group, monster_group)
     return new_player, x, y
+
+
 def play(map):
-    global ex
+    global experience
     global money
     pygame.display.set_caption('игра')
     star = 0
@@ -307,20 +298,21 @@ def play(map):
     running = True
     fps = 60
     clock = pygame.time.Clock()
-    def game_over(exp, star=None):
-        global ex
+
+    def game_over(experience_from_the_level, star=None):
+        global experience
         global running
         running = False
         if star:
             if stars[map] < star:
                 stars[map] = star
-        ex += exp
-        if exp == 1:
+        experience += experience_from_the_level
+        if experience_from_the_level == 1:
             menu('win')
-            win.play()
+            win_music.play()
         else:
             menu('lose')
-            death.play()
+            death_music.play()
 
     def teleport(x, y):
         if level_map[y][x] in '1':
@@ -329,10 +321,12 @@ def play(map):
                     if level_map[coord_y][coord_x] == '1':
                         if coord_y != y or coord_x != x:
                             return 25 * (coord_x + 1), 25 * coord_y
+
     def check_move():
         if not go_up and not go_down and not go_right and not go_left:
             return True
         return False
+
     def give_money():
         global money
         star = 0
@@ -343,10 +337,8 @@ def play(map):
                 money += pygame.sprite.spritecollideany(player, money_group).price
             pygame.sprite.spritecollideany(player, money_group).kill()
         return star
-    go_up = False
-    go_down = False
-    go_right = False
-    go_left = False
+
+    go_up, go_down, go_right, go_left = False, False, False, False
     count = 0
     while running:
         for event in pygame.event.get():
@@ -454,29 +446,31 @@ def play(map):
         clock.tick(fps)
         pygame.display.flip()
     pygame.quit()
+
+
 def menu(lose_or_win=None):
-    global lvl
-    global ex
+    global level
+    global experience
     global energy
     global money
     global player_image
     global player_image_num
     global last_update
     pygame.display.set_caption('меню')
-    if ex >= lvl:
-        ex = 0
-        lvl += 1
+    if experience >= level:
+        experience = 0
+        level += 1
         energy = 5
-        money += 50 * lvl
+        money += 50 * level
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
         screen.blit(font.render('new lvl!!!', False, 'yellow'), (width // 2 - 150, height // 2 - 50))
-        screen.blit(font.render(str(lvl * 50), False, 'yellow'), (width // 2 - 150, height // 2 + 50))
+        screen.blit(font.render(str(level * 50), False, 'yellow'), (width // 2 - 150, height // 2 + 50))
         pygame.display.flip()
         sleep(2)
     if lose_or_win == 'win':
-        win.play()
+        win_music.play()
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
@@ -484,7 +478,7 @@ def menu(lose_or_win=None):
         pygame.display.flip()
         sleep(0.5)
     if lose_or_win == 'lose':
-        death.play()
+        death_music.play()
         font = pygame.font.Font(None, 100)
         fon = pygame.transform.scale(load_image('фон.jpg', 'white'), (600, 600))
         screen.blit(fon, (0, 0))
@@ -532,7 +526,8 @@ def menu(lose_or_win=None):
                     restart()
                 if x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and no_go_shop:
                     no_go_shop = False
-                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50, height - 20) and not no_go_shop:
+                elif x in range(width // 2 - 50, width // 2 + 50) and y in range(height - 50,
+                                                                                 height - 20) and not no_go_shop:
                     no_go_shop = True
                 elif x in range(width - 45, width - 15) and y in range(3, 33):
                     no_go_shop_money = False
@@ -542,12 +537,11 @@ def menu(lose_or_win=None):
             font = pygame.font.SysFont('Consolas', 38)
 
             clock = pygame.time.Clock()
-            pygame.draw.rect(screen, 'black',
-                             (0, 0, width, 40))
+            pygame.draw.rect(screen, 'black', (0, 0, width, 40))
             fon = font.render(str(money), 10, pygame.Color('yellow'))
             screen.blit(fon, (width - (len(str(money)) + 10) * 12, 0))
             font = pygame.font.Font(None, 60)
-            screen.blit(font.render('lvl' + str(lvl), False, 'yellow'), (0, 0))
+            screen.blit(font.render('lvl' + str(level), False, 'yellow'), (0, 0))
             en = load_image('энергия.jpg')
             screen.blit(en, en.get_rect().move(width // 2 - 100, 5))
             res = load_image('рестарт.png')
@@ -589,7 +583,6 @@ def menu(lose_or_win=None):
             font = pygame.font.Font(None, 35)
             screen.blit(font.render('shop', False, 'black'), (width // 2 - 45, height - 50))
 
-            lvl_group.draw(screen)
             pygame.display.flip()
             clock.tick(FPS)
         elif not no_go_shop_money:
@@ -600,12 +593,14 @@ def menu(lose_or_win=None):
                              (width // 2 - 140, height // 2 - 100, 300, 200))
             pygame.draw.rect(screen, 'black',
                              (width // 2 - 115, height // 2 - 85, 110, 150), 2)
-            screen.blit(load_image('персонаж 2 для магазина.jpg', -1), load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110, height // 2 - 80))
+            screen.blit(load_image('персонаж 2 для магазина.jpg', -1),
+                        load_image('персонаж 2 для магазина.jpg', -1).get_rect().move(width // 2 - 110,
+                                                                                      height // 2 - 80))
             pygame.draw.rect(screen, 'black',
                              (width // 2 + 25, height // 2 - 85, 110, 150), 2)
             screen.blit(load_image('персонаж 4 для магазина.png', 'yellow'),
                         load_image('персонаж 4 для магазина.png', 'yellow').get_rect().move(width // 2 + 30,
-                                                                                      height // 2 - 80))
+                                                                                            height // 2 - 80))
             if 'evil' not in my_skin:
                 font = pygame.font.Font(None, 70)
                 screen.blit(font.render('200', False, 'black'), (width // 2 - 105, height // 2 + 20))
@@ -645,19 +640,20 @@ def menu(lose_or_win=None):
                             player_image_num = 2
                             no_go_shop = True
             pygame.display.flip()
+
+
+monster_group = pygame.sprite.Group()
 data = open('regist.csv', encoding='utf-8').read()
 for row in data.split('/n'):
     account = row.split(';')
-death = pygame.mixer.Sound('data/mario_bros_die.mp3')
-win = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
+death_music = pygame.mixer.Sound('data/mario_bros_die.mp3')
+win_music = pygame.mixer.Sound('data/super-mario-world-death-on-piano.mp3')
 money = int(account[1])
-ex = float(account[2])
-lvl = int(account[0])
+experience = float(account[2])
+level = int(account[0])
 time = timedelta(seconds=10)
 last_update = datetime.now()
-FPS = 50
-size = width, height = 500, 500
-screen = pygame.display.set_mode(size)
+FPS = 60
 clock = pygame.time.Clock()
 my_skin = account[3].split()
 stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6]),
@@ -665,24 +661,7 @@ stars = {'map1': int(account[4]), 'map2': int(account[5]), 'map3': int(account[6
          'map7': int(account[10]), 'map8': int(account[11]),
          'map9': int(account[12]), 'map0': 3
          }
-tile_images = {
-    'left': pygame.transform.rotate(load_image('право.png'), 180),
-    'right': load_image('право.png'),
-    'bottom': pygame.transform.rotate(load_image('право.png'), 270),
-    'top': pygame.transform.rotate(load_image('право.png'), 90),
-    'leftt': pygame.transform.rotate(load_image('иглы.png'), 90),
-    'rightt': pygame.transform.rotate(load_image('иглы.png'), 270),
-    'topp': load_image('иглы.png', 'red'),
-    'bottomm': pygame.transform.rotate(load_image('иглы.png', 'red'), 180),
-    'all': load_image('стена.png'),
-    'empty': load_image('тёмнофиолетовый фон.png'),
-    'non': load_image('пусто.jpg', 'red'),
-    'coin': load_image('звезда для игры.png'),
-    'exit': load_image('сундук1.png', -1),
-    'портал': load_image('квадрат красивый.jpg'),
-    'диск': load_image('диск.png', -1),
-    'телепорт': load_image('портал.jpg', -1)
-}
+tile_images
 if '0' in account[-1]:
     player_image = load_image('куб.jpeg')
     player_image_num = 0
@@ -693,20 +672,15 @@ else:
     player_image = load_image('персонаж 3.png')
     player_image_num = 2
 tile_width = tile_height = 25
-player = None
-
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 money_group = pygame.sprite.Group()
-lvl_group = pygame.sprite.Group()
 door_group = pygame.sprite.Group()
-monster_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
 laser_help_group = pygame.sprite.Group()
-pygame.display.set_caption('меню')
-start_screen()
 star = 0
 energy = 5
 tile_width = tile_height = 25
+start_screen()
 menu()
